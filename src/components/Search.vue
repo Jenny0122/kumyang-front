@@ -62,7 +62,7 @@
     <!-- Content Section -->
     <div class="content_wrap">
       <div class="container">
-        <div v-if = "showAdvanceSearchArea" class="layer_pop">
+        <div v-if="showAdvanceSearchArea" class="layer_pop">
           <!-- 검색어 -->
           <div class="inp_txt_box">
             <strong class="inp_tit">검색어</strong>
@@ -129,8 +129,8 @@
                 </label>
               </div>
               <div class="terms_area" v-if="selectedPeriod === 'direct'">
-          <span class="inp_area calendar">
-            <div class="inp_calendar">
+            <span class="inp_area calendar">
+              <div class="inp_calendar">
               <input
                   name="startDate"
                   v-model="startDate"
@@ -138,7 +138,6 @@
                   type="date"
               />
             </div>
-            ~
             <div class="inp_calendar">
               <input
                   name="endDate"
@@ -185,7 +184,8 @@
             <span class="point">총 {{ totalCount }} 건</span> 입니다.
           </p>
         </div>
-        <div v-else>
+        <!-- 검색 결과가 없고, 검색이 실행된 경우 -->
+        <div v-else-if="searchExecuted">
           <div class="no_result">
             <p>입력하신 검색어와 일치하는 정보를 찾지 못했습니다.</p>
           </div>
@@ -196,43 +196,63 @@
 </template>
 
 <script>
-import {ref, reactive} from "vue";
+import { ref, reactive } from "vue";
 
 export default {
   name: "SearchPage",
   setup() {
-    let showAdvanceSearchArea = ref(false);
+    // Reactive state for advanced search visibility
+    const showAdvanceSearchArea = ref(false);
+
     // Reactive state for search parameters
     const searchParams = reactive({
       startCount: 0,
       sort: "",
       collection: "ALL",
-      range: "",
-      startDate: "",
-      endDate: "",
-      searchField: "",
+      range: "ALL", // Default range
+      startDate: "", // Default empty
+      endDate: "", // Default empty
+      searchField: "ALL", // Default search field
       reChk: false,
       query: "",
       writer: "",
       dept: "",
     });
 
+    const selectedPeriod = ref('direct'); // 'direct'로 초기화
+
     const totalCount = ref(0); // Example total count from API
+    const searchExecuted = ref(false); // 검색 실행 여부
+
 
     const submitSearch = () => {
       console.log("Submitting search with parameters:", searchParams);
-      // Call your API with searchParams
+      // Here, call your API to submit the searchParams
     };
 
-    const search = () => {
-      console.log("Search triggered");
+    const search = async () => {
+      searchExecuted.value = false; // 초기화
+      totalCount.value = 0; // 검색 결과 초기화
+
+      try {
+        // API 호출
+        const response = await this.$axios.post("/search", searchParams);
+        const data = response.data;
+
+        // 검색 결과 업데이트
+        totalCount.value = data.totalCount || 0;
+      } catch (error) {
+        console.warn("검색 실패:", error);
+      } finally {
+        // 검색이 실행되었음을 표시
+        searchExecuted.value = true;
+      }
     };
 
     const toggleAdvancedSearch = () => {
-      console.log("Toggle Advanced Search");
-      this.showAdvanceSearchArea != this.showAdvanceSearchArea
-      console.debug(this.showAdvanceSearchArea)
-      return this.showAdvanceSearchArea
+      // Toggle the value of showAdvanceSearchArea
+      showAdvanceSearchArea.value = !showAdvanceSearchArea.value;
+      console.debug("Advanced Search Area:", showAdvanceSearchArea.value);
     };
 
     return {
@@ -240,11 +260,14 @@ export default {
       searchParams,
       totalCount,
       submitSearch,
+      searchExecuted,
       search,
       toggleAdvancedSearch,
+      selectedPeriod
     };
   },
 };
+
 </script>
 
 <style scoped>
