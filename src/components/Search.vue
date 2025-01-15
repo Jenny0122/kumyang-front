@@ -1,9 +1,9 @@
 <template>
   <div class="wrapper">
     <!-- Hidden Inputs -->
-    <div v-for="(value, key) in searchParams" :key="key">
-      <input type="hidden" :name="key" :value="value"/>
-    </div>
+<!--    <div v-for="(value, key) in searchParams" :key="key">-->
+<!--      <input type="hidden" :name="key" :value="value"/>-->
+<!--    </div>-->
 
     <!-- Header Section -->
     <div class="header_wrap">
@@ -119,18 +119,28 @@
             <strong class="inp_tit">검색기간</strong>
             <div class="cont_btn_group terms">
               <div class="terms_area">
-                <label v-for="(period, index) in periods" :key="index">
-                  <input
-                      type="radio"
-                      class="inp_radio"
-                      name="terms1"
-                      :value="period.value"
-                      v-model="selectedPeriod"
-                  />
-                  {{ period.label }}
-                </label>
+                <b-form-radio-group v-model="selectedPeriod"
+                                    :options="periods"
+                                    class="mb-3"
+                                    value-field="value"
+                                    text-field="label"></b-form-radio-group>
+<!--                <label v-for="(period, index) in periods" :key="index">-->
+<!--                  <input-->
+<!--                      type="radio"-->
+<!--                      :value="period.value"-->
+<!--                      v-model="selectedPeriod"-->
+<!--                  />-->
+<!--                  {{ period.label }}-->
+<!--                </label>-->
+
               </div>
-              <div class="terms_area" v-if="selectedPeriod === 'direct'">
+              <b-form-radio-group v-model="selectedPeriod"
+                                                        :options="direct"
+                                                        class="mb-3 d-inline"
+                                                        value-field="value"
+                                                        text-field="label"
+              ></b-form-radio-group>
+            <div class="terms_area" v-if="selectedPeriod === 'direct'">
             <span class="inp_area calendar">
               <div class="inp_calendar">
               <input
@@ -158,15 +168,21 @@
             <strong class="inp_tit">검색영역</strong>
             <div class="cont_btn_group terms">
               <div class="terms_area">
-                <label v-for="(scope, index) in searchScopes" :key="index">
-                  <input
-                      type="checkbox"
-                      class="inp_chk"
-                      :value="scope.value"
-                      v-model="selectedScopes"
-                  />
-                  {{ scope.label }}
-                </label>
+                <b-form-checkbox-group
+                    v-model="selectedScopes"
+                    :options="searchScopes"
+                    class="mb-3"
+                    value-field="value"
+                    text-field="label"
+                ></b-form-checkbox-group>
+<!--                <label v-for="(scope, index) in searchScopes" :key="index">-->
+<!--                  <input-->
+<!--                      type="checkbox"-->
+<!--                      :value="scope.value"-->
+<!--                      v-model="selectedScopes"-->
+<!--                  />-->
+<!--                  {{ scope.label }}-->
+<!--                </label>-->
               </div>
             </div>
           </div>
@@ -174,7 +190,7 @@
           <!-- 버튼 -->
           <div class="layer_bottom">
             <button type="button" class="btn blue" @click="resetSearch">초기화</button>
-            <button type="button" class="btn gray" @click="applySearch">적용</button>
+<!--            <button type="button" class="btn gray" @click="applySearch">적용</button>-->
           </div>
         </div>
 
@@ -221,6 +237,16 @@ export default {
       {condition: 'AND', keyword: ''},
       {condition: 'AND', keyword: ''}
     ]);
+    const periods = ref([
+        {value: 'ALL', label: '전체'},
+        {value: 'day', label: '1일'},
+        {value: 'week', label: '1주일'},
+        {value: 'month', label: '1개월'},
+        {value: 'year', label: '1년'}
+    ]);
+    const direct = ref([
+      {value: 'direct', label: '직접입력'}
+    ]);
     const searchScopes = ref([
       {value: 'ALL', label: '전체'},
       {value: 'title', label: '제목'},
@@ -229,10 +255,10 @@ export default {
     ]);
 
     const showAdvanceSearchArea = ref(false);
-    const selectedPeriod = ref('direct'); // 'direct'로 초기화
     const totalCount = ref(0); // Example total count from API
     const searchExecuted = ref(false); // 검색 실행 여부
-
+    const selectedPeriod = ref('ALL'); // 'direct'로 초기화
+    const selectedScopes = ref(['ALL'])
 
     const submitSearch = () => {
       console.log("Submitting search with parameters:", searchParams);
@@ -242,6 +268,10 @@ export default {
       searchExecuted.value = false; // 초기화
       totalCount.value = 0; // 검색 결과 초기화
 
+      console.log(selectedPeriod.value)
+      console.log(selectedScopes.value)
+
+
       try {
         // API 호출
         const response = await axios.post("/search", searchParams);
@@ -250,6 +280,7 @@ export default {
         // 검색 결과 업데이트
         totalCount.value = data.totalCount || 0;
       } catch (error) {
+        alert(error.response.data.message)
         console.warn("검색 실패:", error);
       } finally {
         // 검색이 실행되었음을 표시
@@ -265,13 +296,16 @@ export default {
       showAdvanceSearchArea,
       searchConditions,
       searchScopes,
+      direct,
       searchParams,
       totalCount,
       submitSearch,
       searchExecuted,
       search,
       toggleAdvancedSearch,
-      selectedPeriod
+      selectedPeriod,
+      selectedScopes,
+      periods
     };
   },
 };
@@ -279,5 +313,4 @@ export default {
 </script>
 
 <style scoped>
-/* Add your styles here */
 </style>

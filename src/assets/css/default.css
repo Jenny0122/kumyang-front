@@ -46,7 +46,7 @@ a:focus,a:active,a:hover,a:focus{text-decoration:none}
 mark{background-color:transparent}
 
 input[type=radio] + label,input[type=checkbox] + label {display:inline-block;vertical-align:middle;}
-input[type=radio],input[type=checkbox] {position:absolute;border:0;clip:rect(0 0 0 0);width:1px;height:1px;margin:-1px;overflow:hidden;padding:0;}
+/*input[type=radio],input[type=checkbox] {position:absolute;border:0;clip:rect(0 0 0 0);width:1px;height:1px;margin:-1px;overflow:hidden;padding:0;}*/
 input[type=text]::-ms-clear {display:none;}
 
 /* placeholder 컬러 변경 */
