@@ -27,12 +27,14 @@
                 <option value="board">게시판</option>
               </select>
             </div>
+
             <input
                 v-model="searchParams.query"
                 id="query"
                 type="text"
                 autocomplete="off"
             />
+
             <a href="#" class="sch_btn"><span class="ico_comm">자동완성 열기</span></a>
 
             <!-- Search Input -->
@@ -201,10 +203,6 @@ import { ref, reactive } from "vue";
 export default {
   name: "SearchPage",
   setup() {
-    // Reactive state for advanced search visibility
-    const showAdvanceSearchArea = ref(false);
-
-    // Reactive state for search parameters
     const searchParams = reactive({
       startCount: 0,
       sort: "",
@@ -215,19 +213,29 @@ export default {
       searchField: "ALL", // Default search field
       reChk: false,
       query: "",
-      writer: "",
-      dept: "",
+      writer: "", // 작성자
+      department: "",
     });
+    const searchConditions = ref([
+      {condition: 'AND', keyword: ''},
+      {condition: 'AND', keyword: ''},
+      {condition: 'AND', keyword: ''}
+    ]);
+    const searchScopes = ref([
+      {value: 'ALL', label: '전체'},
+      {value: 'title', label: '제목'},
+      {value: 'content', label: '내용'},
+      {value: 'file', label: '첨부파일'}
+    ]);
 
+    const showAdvanceSearchArea = ref(false);
     const selectedPeriod = ref('direct'); // 'direct'로 초기화
-
     const totalCount = ref(0); // Example total count from API
     const searchExecuted = ref(false); // 검색 실행 여부
 
 
     const submitSearch = () => {
       console.log("Submitting search with parameters:", searchParams);
-      // Here, call your API to submit the searchParams
     };
 
     const search = async () => {
@@ -236,7 +244,7 @@ export default {
 
       try {
         // API 호출
-        const response = await this.$axios.post("/search", searchParams);
+        const response = await axios.post("/search", searchParams);
         const data = response.data;
 
         // 검색 결과 업데이트
@@ -250,13 +258,13 @@ export default {
     };
 
     const toggleAdvancedSearch = () => {
-      // Toggle the value of showAdvanceSearchArea
       showAdvanceSearchArea.value = !showAdvanceSearchArea.value;
-      console.debug("Advanced Search Area:", showAdvanceSearchArea.value);
     };
 
     return {
       showAdvanceSearchArea,
+      searchConditions,
+      searchScopes,
       searchParams,
       totalCount,
       submitSearch,
