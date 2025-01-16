@@ -6,6 +6,7 @@
 <!--    </div>-->
 
     <!-- Header Section -->
+
     <div class="header_wrap">
       <div class="header">
         <div class="top">
@@ -99,7 +100,7 @@
               <input
                   type="text"
                   class="inp_txt"
-                  v-model="department"
+                  v-model="dept"
                   placeholder="부서를 입력하세요"
               />
             </div>
@@ -108,7 +109,7 @@
               <input
                   type="text"
                   class="inp_txt"
-                  v-model="writer"
+                  v-model="userNm"
                   placeholder="작성자를 입력하세요"
               />
             </div>
@@ -124,21 +125,12 @@
                                     class="mb-3"
                                     value-field="value"
                                     text-field="label"></b-form-radio-group>
-<!--                <label v-for="(period, index) in periods" :key="index">-->
-<!--                  <input-->
-<!--                      type="radio"-->
-<!--                      :value="period.value"-->
-<!--                      v-model="selectedPeriod"-->
-<!--                  />-->
-<!--                  {{ period.label }}-->
-<!--                </label>-->
-
               </div>
               <b-form-radio-group v-model="selectedPeriod"
-                                                        :options="direct"
-                                                        class="mb-3 d-inline"
-                                                        value-field="value"
-                                                        text-field="label"
+                                  :options="direct"
+                                  class="mb-3 d-inline"
+                                  value-field="value"
+                                  text-field="label"
               ></b-form-radio-group>
             <div class="terms_area" v-if="selectedPeriod === 'direct'">
             <span class="inp_area calendar">
@@ -194,6 +186,7 @@
           </div>
         </div>
 
+        <SearchResult :result="searchResults"/>
 
         <!-- Search Results -->
         <div v-if="totalCount > 0">
@@ -201,6 +194,13 @@
             <span class="point">‘{{ searchParams.query }}’</span>에 대한 검색결과는
             <span class="point">총 {{ totalCount }} 건</span> 입니다.
           </p>
+          <ul>
+            <li v-for="item in searchResults" :key="item.DOCID">
+              <strong>{{ item.TITLE }}</strong>
+              <p>{{ item.CONTENTS }}</p>
+              <span>{{ item.DATE }}</span>
+            </li>
+          </ul>
         </div>
         <!-- 검색 결과가 없고, 검색이 실행된 경우 -->
         <div v-else-if="searchExecuted">
@@ -213,104 +213,92 @@
   </div>
 </template>
 
-<script>
-import { ref, reactive } from "vue";
+<script setup>
+import {ref, reactive} from 'vue';
+import SearchResult from '../components/SearchResult.vue';
+import axios from 'axios';
 
-export default {
-  name: "SearchPage",
-  setup() {
-    const searchParams = reactive({
-      startCount: 0,
-      sort: "",
-      collection: "ALL",
-      range: "ALL", // Default range
-      startDate: "", // Default empty
-      endDate: "", // Default empty
-      searchField: "ALL", // Default search field
-      reChk: false,
-      query: "",
-      writer: "", // 작성자
-      department: "",
-    });
-    const searchConditions = ref([
-      {condition: 'AND', keyword: ''},
-      {condition: 'AND', keyword: ''},
-      {condition: 'AND', keyword: ''}
-    ]);
-    const periods = ref([
-        {value: 'ALL', label: '전체'},
-        {value: 'day', label: '1일'},
-        {value: 'week', label: '1주일'},
-        {value: 'month', label: '1개월'},
-        {value: 'year', label: '1년'}
-    ]);
-    const direct = ref([
-      {value: 'direct', label: '직접입력'}
-    ]);
-    const searchScopes = ref([
-      {value: 'ALL', label: '전체'},
-      {value: 'title', label: '제목'},
-      {value: 'content', label: '내용'},
-      {value: 'file', label: '첨부파일'}
-    ]);
+const searchParams = reactive({
+  query: "",
+  collection: "ALL",
+  modifyFrom: "",
+  modifyTo: "",
+  sortField: "DATE",
+  sortDirection: "DESC",
+  pageStart: 0,
+  count: 10,
+  reChk: false,
+  dept: "",
+  userNm: "",
+  title: false,
+  content: false,
+  file: false,
+});
 
-    const showAdvanceSearchArea = ref(false);
-    const totalCount = ref(0); // Example total count from API
-    const searchExecuted = ref(false); // 검색 실행 여부
-    const selectedPeriod = ref('ALL'); // 'direct'로 초기화
-    const selectedScopes = ref(['ALL'])
+const showAdvanceSearchArea = ref(false);
+const totalCount = ref(0);
+const searchResults = ref([]);
+const searchExecuted = ref(false);
+const selectedPeriods = ref('')
 
-    const submitSearch = () => {
-      console.log("Submitting search with parameters:", searchParams);
-    };
+const searchConditions = ref([
+  { condition: "AND", keyword: "" },
+  { condition: "AND", keyword: "" },
+  { condition: "AND", keyword: "" },
+]);
 
-    const search = async () => {
-      searchExecuted.value = false; // 초기화
-      totalCount.value = 0; // 검색 결과 초기화
+const periods = ref([
+  { value: "ALL", label: "전체" },
+  { value: "day", label: "1일" },
+  { value: "week", label: "1주일" },
+  { value: "month", label: "1개월" },
+  { value: "year", label: "1년" },
+]);
 
-      console.log(selectedPeriod.value)
-      console.log(selectedScopes.value)
+const searchScopes = ref([
+  { value: "ALL", label: "전체" },
+  { value: "title", label: "제목" },
+  { value: "content", label: "내용" },
+  { value: "file", label: "첨부파일" },
+]);
 
+const direct = ref([
+  { value: "direct", label: "직접 선택" },
+])
 
-      try {
-        // API 호출
-        const response = await axios.post("/search", searchParams);
-        const data = response.data;
-
-        // 검색 결과 업데이트
-        totalCount.value = data.totalCount || 0;
-      } catch (error) {
-        alert(error.response.data.message)
-        console.warn("검색 실패:", error);
-      } finally {
-        // 검색이 실행되었음을 표시
-        searchExecuted.value = true;
-      }
-    };
-
-    const toggleAdvancedSearch = () => {
-      showAdvanceSearchArea.value = !showAdvanceSearchArea.value;
-    };
-
-    return {
-      showAdvanceSearchArea,
-      searchConditions,
-      searchScopes,
-      direct,
-      searchParams,
-      totalCount,
-      submitSearch,
-      searchExecuted,
-      search,
-      toggleAdvancedSearch,
-      selectedPeriod,
-      selectedScopes,
-      periods
-    };
-  },
+const search = async () => {
+  searchExecuted.value = false;
+  totalCount.value = 0;
+  try {
+    const response = await axios.post('/search', searchParams);
+    searchResults.value = response.data;
+    console.log("searchResult:", searchResults.value)
+    totalCount.value = response.data.totalCount;
+  } catch (error) {
+    console.log(error.response.data)
+    console.error('검색 실패:', error);
+  } finally {
+    searchExecuted.value = true;
+  }
 };
 
+
+
+const resetSearch = () => {
+  searchParams.query = '';
+  searchParams.collection = 'ALL';
+  searchParams.reChk = false;
+  totalCount.value = 0;
+  searchExecuted.value = false;
+};
+
+const toggleAdvancedSearch = () => {
+  showAdvanceSearchArea.value = !showAdvanceSearchArea.value;
+};
 </script>
 
 <style scoped>
+.wrapper {
+  padding: 20px;
+}
 </style>
