@@ -100,16 +100,16 @@
               <input
                   type="text"
                   class="inp_txt"
-                  v-model="dept"
+                  v-model="searchParams.dept"
                   placeholder="부서를 입력하세요"
               />
             </div>
-            <strong class="inp_tit" style="margin-top: 26px;">작성자</strong>
+            <strong class="inp_tit" style="margin-top: 15px;">작성자</strong>
             <div class="cont_btn_group">
               <input
                   type="text"
                   class="inp_txt"
-                  v-model="userNm"
+                  v-model="searchParams.userNm"
                   placeholder="작성자를 입력하세요"
               />
             </div>
@@ -120,18 +120,22 @@
             <strong class="inp_tit">검색기간</strong>
             <div class="cont_btn_group terms">
               <div class="terms_area">
+                <!-- 두 개의 라디오 그룹을 하나의 selectedPeriod로 바인딩 -->
                 <b-form-radio-group v-model="selectedPeriod"
                                     :options="periods"
                                     class="mb-3"
                                     value-field="value"
-                                    text-field="label"></b-form-radio-group>
+                                    text-field="label">
+                </b-form-radio-group>
               </div>
-              <b-form-radio-group v-model="selectedPeriod"
-                                  :options="direct"
-                                  class="mb-3 d-inline"
-                                  value-field="value"
-                                  text-field="label"
-              ></b-form-radio-group>
+              <div class="terms_area">
+                <b-form-radio-group v-model="selectedPeriod"
+                                    :options="direct"
+                                    class="3"
+                                    value-field="value"
+                                    text-field="label">
+                </b-form-radio-group>
+              </div>
             <div class="terms_area" v-if="selectedPeriod === 'direct'">
             <span class="inp_area calendar">
               <div class="inp_calendar">
@@ -167,14 +171,6 @@
                     value-field="value"
                     text-field="label"
                 ></b-form-checkbox-group>
-<!--                <label v-for="(scope, index) in searchScopes" :key="index">-->
-<!--                  <input-->
-<!--                      type="checkbox"-->
-<!--                      :value="scope.value"-->
-<!--                      v-model="selectedScopes"-->
-<!--                  />-->
-<!--                  {{ scope.label }}-->
-<!--                </label>-->
               </div>
             </div>
           </div>
@@ -185,8 +181,6 @@
 <!--            <button type="button" class="btn gray" @click="applySearch">적용</button>-->
           </div>
         </div>
-
-        <SearchResult :result="searchResults"/>
 
         <!-- Search Results -->
         <div v-if="totalCount > 0">
@@ -203,11 +197,20 @@
           </ul>
         </div>
         <!-- 검색 결과가 없고, 검색이 실행된 경우 -->
-        <div v-else-if="searchExecuted">
+        <div v-if="totalCount == 0">
           <div class="no_result">
             <p>입력하신 검색어와 일치하는 정보를 찾지 못했습니다.</p>
           </div>
         </div>
+        <b-card no-body>
+          <b-tabs active-nav-item-class="font-weight-bold text-light bg-success"
+                  content-class="mt-3 text-dark" fill>
+            <b-tab title="전체"><SearchResult :result="searchResults"/></b-tab>
+            <b-tab title="게시판" v-show=""><SearchResult :result="searchResults"/></b-tab>
+            <b-tab title="전자결재"><SearchResult :result="searchResults"/></b-tab>
+          </b-tabs>
+        </b-card>
+
       </div>
     </div>
   </div>
@@ -239,7 +242,8 @@ const showAdvanceSearchArea = ref(false);
 const totalCount = ref(0);
 const searchResults = ref([]);
 const searchExecuted = ref(false);
-const selectedPeriods = ref('')
+const selectedPeriod = ref('ALL');
+const selectedScopes = ref(['ALL']);
 
 const searchConditions = ref([
   { condition: "AND", keyword: "" },
@@ -270,15 +274,13 @@ const search = async () => {
   searchExecuted.value = false;
   totalCount.value = 0;
   try {
+    console.log(selectedPeriods.value)
     const response = await axios.post('/search', searchParams);
-    searchResults.value = response.data;
-    console.log("searchResult:", searchResults.value)
+    searchResults.value = response.data.board;
     totalCount.value = response.data.totalCount;
   } catch (error) {
     console.log(error.response.data)
     console.error('검색 실패:', error);
-  } finally {
-    searchExecuted.value = true;
   }
 };
 
@@ -288,8 +290,11 @@ const resetSearch = () => {
   searchParams.query = '';
   searchParams.collection = 'ALL';
   searchParams.reChk = false;
-  totalCount.value = 0;
+  searchParams.dept = "";
+  searchParams.userNm = '';
   searchExecuted.value = false;
+  selectedPeriod.value = 'ALL'
+  selectedScopes.value = ['ALL']
 };
 
 const toggleAdvancedSearch = () => {
@@ -301,4 +306,5 @@ const toggleAdvancedSearch = () => {
 .wrapper {
   padding: 20px;
 }
+
 </style>

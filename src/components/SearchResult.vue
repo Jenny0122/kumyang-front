@@ -23,16 +23,15 @@
         </select>
       </div>
     </div>
-
     <!-- Board items -->
     <div v-for="(item, index) in results" :key="index" class="board_cont_box">
       <div class="tit_box">
-        <a :href="'javascript: openBbs(' + item.DOCID + ', K)'" class="tit">{{ highlightKeyword(item.TITLE) }}</a>
+        <a class="tit" v-html="highlightKeyword(item.title)"></a>
       </div>
-      <span class="date">{{ item.DATE }}</span>
-      <div class="cont">{{ sanitizeContent(item.CONTENTS) }}</div>
+      <span class="date">{{ item.modifyDate }}</span>
+      <div class="cont">{{ sanitizeContent(item.fileContents) }}</div>
       <div class="tit_info">
-        <span>{{ item.BRDFULLPATH }}</span>
+<!--        <span>{{ item.BRDFULLPATH }}</span>-->
       </div>
     </div>
 
@@ -48,15 +47,14 @@
 <script setup>
 import { ref, reactive, onMounted, watch, defineProps } from 'vue';
 
-
-
 const collection = ref('board');
-const collectionName = ref('');
+const collectionName = ref('결과');
 const totalCount = ref(0);
 const totalViewCount = ref(10); // 예시
 const sortOption = ref('RANK/DESC');
 const resultCount = ref(10);
 const results = ref([]);
+// const results = ref(props.result);
 const pageLinks = reactive([]);
 const props = defineProps({
   result: {
@@ -65,24 +63,23 @@ const props = defineProps({
   }
 });
 
-
-// `result` 값이 바뀔 때마다 반응적으로 데이터를 처리하기 위한 변수
-
 onMounted(() => {
-  if (props.result && props.result.length > 0) {
-    collectionName.value = '검색 결과';
     results.value = props.result;
-    console.log("result:",this.result);
-
-  }
 });
 
 watch(() => props.result, (newResult) => {
-  if (newResult && newResult.length > 0) {
-    collectionName.value = '검색 결과';
-    results.value = newResult;
-  }
-});
+  results.value = newResult.result;
+  collectionName.value = newResult.collection;
+  totalCount.value = newResult.totalCount;
+  console.log(results.value)
+}, { deep: true });
+
+
+
+
+
+
+
 const fetchData = async () => {
   // API 호출로 데이터 받아오기
   // try {
@@ -118,23 +115,15 @@ const sanitizeContent = (content) => {
 };
 
 const loadMore = () => {
-  // '더보기' 클릭 시 추가 데이터 로드
-  fetchData();
 };
 
 const doSorting = () => {
-  // Sorting 처리
-  fetchData();
 };
 
 const changeResultCount = () => {
-  // Result count 변경 시 처리
-  fetchData();
 };
 
 const changePage = (page) => {
-  // 페이지 변경 시 처리
-  fetchData();
 };
 
 </script>

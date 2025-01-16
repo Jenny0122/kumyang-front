@@ -7,7 +7,7 @@
 .header_wrap:after{content:"";display:block;clear:both;}
 .header{position:relative;padding:16px 0;width:1500px;height:100px;margin:0 auto;box-sizing:border-box;justify-content:center;display:flex;}
 .header:after{content:"";display:block;clear:both;}
-.content_wrap{position:relative;min-height: 100vh;} /*background: #f8f8f8;*/
+.content_wrap{position:relative;min-height: 100vh;width:100%;} /*background: #f8f8f8;*/
 .container{position:relative;width:1200px;margin:0 auto;}
 .container:after{content:"";display:block;clear:both;}
 
@@ -86,7 +86,7 @@
 .inp_chk + .sc_name .chk_img.terms{position: relative;top: -1px;background: url(../images/bg_terms_chk.png) 0 0 no-repeat;background-size:contain;}
 .inp_chk:checked + .sc_name .chk_img{background:url(../images/bg_chk_on.png) 0 0 no-repeat;background-size:contain;}
 
-.layer_pop{position: relative;width:1500px;min-height: 181px;padding: 20px;background:#badfb8;box-sizing:border-box;}
+.layer_pop{position: relative;width:100%;min-height: 181px;padding: 20px;background:#badfb8;box-sizing:border-box;}
 .cont_btn_group:after{content:"";display:block;clear:both;}
 .inp_txt_box{float:left;}
 .inp_tit{display:block;}
