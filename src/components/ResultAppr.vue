@@ -30,6 +30,7 @@
       </div>
       <span class="date">{{ item.draftDate }}</span>
       <div class="cont" v-html="sanitizeContent(item.contents)"></div>
+      <div class="cont" v-html="item.fileName"></div>
       <span class="cont">{{ item.dept }}</span>
       <div class="tit_info">
       </div>
@@ -105,10 +106,6 @@ const fetchData = async () => {
   // } catch (error) {
   //   console.error('Error fetching data:', error);
   // }
-};
-
-const highlightKeyword = (text) => {
-  return text.replace(/(keword)/g, '<font color="red">$1</font>'); // 예시로 'keyword' 하이라이트
 };
 
 const sanitizeContent = (contents) => {
