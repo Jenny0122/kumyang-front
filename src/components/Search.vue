@@ -189,7 +189,7 @@
             <span class="point">총 {{ totalCount }} 건</span> 입니다.
           </p>
           <ul>
-            <li v-for="item in searchResults" :key="item.DOCID">
+            <li v-for="item in resultAppr" :key="item.DOCID">
               <strong>{{ item.TITLE }}</strong>
               <p>{{ item.CONTENTS }}</p>
               <span>{{ item.DATE }}</span>
@@ -203,11 +203,21 @@
           </div>
         </div>
         <b-card no-body>
-          <b-tabs active-nav-item-class="font-weight-bold text-light bg-success"
-                  content-class="mt-3 text-dark" fill>
-            <b-tab title="전체"><SearchResult :result="searchResults"/></b-tab>
-            <b-tab title="게시판" v-show=""><SearchResult :result="searchResults"/></b-tab>
-            <b-tab title="전자결재"><SearchResult :result="searchResults"/></b-tab>
+          <b-tabs
+                  v-model="activeTab"
+                  active-nav-item-class="font-weight-bold text-light bg-primary"
+                  content-class="mt-3 text-dark" fill
+          >
+            <b-tab title="전체">
+              <ResultAppr :result="resultAppr" :activateMore="true"/>
+              <ResultBoard :result="resultBoard" :activateMore="true"/>
+            </b-tab>
+            <b-tab title="전자결재">
+              <ResultAppr :result="resultAppr"/>
+            </b-tab>
+            <b-tab title="게시판">
+              <ResultBoard :result="resultBoard"/>
+            </b-tab>
           </b-tabs>
         </b-card>
 
@@ -218,7 +228,8 @@
 
 <script setup>
 import {ref, reactive} from 'vue';
-import SearchResult from '../components/SearchResult.vue';
+import ResultAppr from './ResultAppr.vue';
+import ResultBoard from '../components/ResultBoard.vue';
 import axios from 'axios';
 
 const searchParams = reactive({
@@ -237,10 +248,16 @@ const searchParams = reactive({
   content: false,
   file: false,
 });
+const activeTab = ref(0);
+
+const activateTab = (index) => {
+  activeTab.value = index;
+};
 
 const showAdvanceSearchArea = ref(false);
 const totalCount = ref(0);
-const searchResults = ref([]);
+const resultAppr = ref({});
+const resultBoard = ref({});
 const searchExecuted = ref(false);
 const selectedPeriod = ref('ALL');
 const selectedScopes = ref(['ALL']);
@@ -274,12 +291,14 @@ const search = async () => {
   searchExecuted.value = false;
   totalCount.value = 0;
   try {
-    console.log(selectedPeriods.value)
+    console.log(selectedPeriod.value)
     const response = await axios.post('/search', searchParams);
-    searchResults.value = response.data.board;
+    resultAppr.value = response.data.all;
+    resultAppr.value = response.data.appr;
+    resultBoard.value = response.data.board;
     totalCount.value = response.data.totalCount;
   } catch (error) {
-    console.log(error.response.data)
+    console.log(error.response)
     console.error('검색 실패:', error);
   }
 };

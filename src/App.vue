@@ -18,7 +18,7 @@ import Search from './components/Search.vue'
 
 <style>
 @import './assets/css/default.css';
-@import './assets/css/search_sty.css';
+@import 'assets/css/search_sty.css';
 @import './assets/css/jquery-ui.css';
 
 header {

@@ -74,8 +74,8 @@
 .btn{display:inline-block;min-width: 92px;height:40px;font-weight: 500;padding: 9px 0 10px;border-radius:4px;text-align:center;line-height:22px;color:#fff;box-sizing:border-box;}
 .btn + .btn{margin-left:6px;}
 .layer_bottom .btn + .btn{margin-left:4px}
-.btn.gray{background-color:#333;}
-.btn.blue{background-color:#00582d;}
+.btn.gray{background-color:#1c94c4}
+.btn.blue{background-color:#005bac;}
 
 .chk_box{float: right;}
 .chk_box_group{float:right;position:relative;top:11px;}
@@ -86,7 +86,7 @@
 .inp_chk + .sc_name .chk_img.terms{position: relative;top: -1px;background: url(../images/bg_terms_chk.png) 0 0 no-repeat;background-size:contain;}
 .inp_chk:checked + .sc_name .chk_img{background:url(../images/bg_chk_on.png) 0 0 no-repeat;background-size:contain;}
 
-.layer_pop{position: relative;width:100%;min-height: 181px;padding: 20px;background:#badfb8;box-sizing:border-box;}
+.layer_pop{position: relative;width:100%;min-height: 181px;padding: 20px;background:#88c5eb;box-sizing:border-box;}
 .cont_btn_group:after{content:"";display:block;clear:both;}
 .inp_txt_box{float:left;}
 .inp_tit{display:block;}
