@@ -1,14 +1,14 @@
 <template>
   <div class="board_box">
     <div class="board_tit_box">
-      <strong class="tit">{{ collectionName }}</strong>
+      <strong class="tit">게시판</strong>
       <span class="num">({{ totalCount }}건)</span>
 
-      <div v-if="activateMore && totalCount > totalViewCount">
+      <div v-if="activeMore && totalCount > totalViewCount" class="board_select_box">
         <button @click="loadMore">더보기</button>
       </div>
 
-      <div v-if="collection !== 'ALL'" class="board_select_box">
+      <div v-if="!activeMore" class="board_select_box">
         <!-- Sorting options -->
         <select v-model="sortOption" @change="doSorting">
           <option value="RANK/DESC">정확도순</option>
@@ -30,7 +30,7 @@
         <a class="tit" v-html="highlightKeyword(item.title)"></a>
       </div>
       <span class="date">{{ item.postDate }}</span>
-      <div class="cont" v-html="sanitizeContent(item.contents)"></div>
+      <div class="cont" v-html="item.contents"></div>
       <div class="tit_info">
         <span>{{ item.BRDFULLPATH }}</span>
       </div>
@@ -46,7 +46,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, watch, defineProps } from 'vue';
+import { ref, reactive, onMounted, watch, defineProps, defineEmits } from 'vue';
 
 // Props 정의
 const props = defineProps({
@@ -54,18 +54,19 @@ const props = defineProps({
     type: Object,
     required: true,
   },
-  activateMore: Boolean
+  activeMore: Boolean
 });
 
 const totalViewCount = ref(3);
 // 데이터 초기화
 const collection = ref('board');
-const collectionName = ref('게시판');
 const totalCount = ref(0);
 const sortOption = ref('RANK/DESC');
 const resultCount = ref(10);
 const results = ref([]);
 const pageLinks = reactive([]);
+
+const emit = defineEmits(['activateTab']);
 
 // Prop 변화 감지 및 데이터 업데이트
 onMounted(() => {
@@ -82,7 +83,6 @@ watch(
 // 데이터 업데이트 함수
 const updateData = (data) => {
   results.value = data.result || [];
-  collectionName.value = data.collection || '게시판';
   totalCount.value = data.totalCount || 0;
   pageLinks.splice(0, pageLinks.length, ...(data.pageLinks || []));
 };
@@ -101,7 +101,8 @@ const sanitizeContent = (contents) => {
 
 // 이벤트 핸들러
 const loadMore = () => {
-  console.log('Load more triggered');
+  console.info('Load more triggered');
+  emit('activateTab', 2);
 };
 
 const doSorting = () => {

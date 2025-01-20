@@ -1,14 +1,14 @@
 <template>
   <div class="board_box">
     <div class="board_tit_box">
-      <strong class="tit">{{ collectionName }}</strong>
+      <strong class="tit">전자결재</strong>
       <span class="num">({{ totalCount }}건)</span>
 
-      <div v-if="activateMore && totalCount > totalViewCount">
+      <div v-if="activeMore && totalCount > totalViewCount" class="board_select_box">
         <button @click="loadMore">더보기</button>
       </div>
 
-      <div v-if="collection !== 'ALL'" class="board_select_box">
+      <div v-if="!activeMore" class="board_select_box">
         <!-- Sorting options -->
         <select v-model="sortOption" @change="doSorting">
           <option value="RANK/DESC" selected>정확도순</option>
@@ -29,7 +29,7 @@
         <a class="tit" v-html="item.title"></a>
       </div>
       <span class="date">{{ item.draftDate }}</span>
-      <div class="cont" v-html="sanitizeContent(item.contents)"></div>
+      <div class="cont" v-html="item.contents"></div>
       <div class="cont" v-html="item.fileName"></div>
       <span class="cont">{{ item.dept }}</span>
       <div class="tit_info">
@@ -46,11 +46,10 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, watch, defineProps } from 'vue';
+import {ref, reactive, onMounted, watch, defineProps, defineEmits} from 'vue';
 
 const totalViewCount = ref(3);
 const collection = ref('appr');
-const collectionName = ref('전자결재');
 const totalCount = ref(0);
 const sortOption = ref('RANK/DESC');
 const resultCount = ref(10);
@@ -62,8 +61,10 @@ const props = defineProps({
     type: Object,  // Object 타입 지정
     required: true // 필수 prop
   },
-  activateMore: Boolean
+  activeMore: Boolean
 });
+
+const emit = defineEmits(['activateTab']);
 
 onMounted(() => {
     results.value = props.result;
@@ -71,9 +72,7 @@ onMounted(() => {
 
 watch(() => props.result, (newResult) => {
   results.value = newResult.result;
-  collectionName.value = newResult.collection;
   totalCount.value = newResult.totalCount;
-  console.log(results.value)
 }, { deep: true });
 
 
@@ -113,9 +112,11 @@ const sanitizeContent = (contents) => {
 };
 
 const loadMore = () => {
+  emit('activateTab', 1);
 };
 
 const doSorting = () => {
+
 };
 
 const changeResultCount = () => {

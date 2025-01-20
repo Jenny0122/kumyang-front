@@ -30,10 +30,11 @@
             </div>
 
             <input
-                v-model="searchParams.query"
+                v-model.trim="searchParams.query"
                 id="query"
                 type="text"
                 autocomplete="off"
+                placeholder="검색어를 입력하세요"
             />
 
             <a href="#" class="sch_btn"><span class="ico_comm">자동완성 열기</span></a>
@@ -51,7 +52,7 @@
             <div class="chk_box">
               <input
                   type="checkbox"
-                  v-model="searchParams.reChk"
+                  v-model="searchParams.requery"
                   id="reChk"
                   style="clip: unset; position: unset; width: 20px; height: 15.86px;"
               />
@@ -78,7 +79,6 @@
                 <select
                     class="selectpicker1"
                     v-model="search.condition"
-                    @change="onSearchConditionChange(index)"
                 >
                   <option value="AND">AND</option>
                   <option value="OR">OR</option>
@@ -87,7 +87,7 @@
               <input
                   type="text"
                   class="inp_txt"
-                  v-model="search.keyword"
+                  v-model.trim="search.keyword"
                   :placeholder="'검색어 입력 ' + (index + 1)"
               />
             </div>
@@ -100,7 +100,7 @@
               <input
                   type="text"
                   class="inp_txt"
-                  v-model="searchParams.dept"
+                  v-model.trim="searchParams.dept"
                   placeholder="부서를 입력하세요"
               />
             </div>
@@ -120,41 +120,40 @@
             <strong class="inp_tit">검색기간</strong>
             <div class="cont_btn_group terms">
               <div class="terms_area">
-                <!-- 두 개의 라디오 그룹을 하나의 selectedPeriod로 바인딩 -->
                 <b-form-radio-group v-model="selectedPeriod"
                                     :options="periods"
                                     class="mb-3"
                                     value-field="value"
-                                    text-field="label">
+                                    text-field="label"
+                                    @change="setDirectPeriod">
                 </b-form-radio-group>
               </div>
-              <div class="terms_area">
-                <b-form-radio-group v-model="selectedPeriod"
-                                    :options="direct"
-                                    class="3"
-                                    value-field="value"
-                                    text-field="label">
-                </b-form-radio-group>
-              </div>
-            <div class="terms_area" v-if="selectedPeriod === 'direct'">
-            <span class="inp_area calendar">
-              <div class="inp_calendar">
-              <input
-                  name="startDate"
-                  v-model="startDate"
-                  class="inp_txt"
-                  type="date"
-              />
-            </div>
-            <div class="inp_calendar">
-              <input
-                  name="endDate"
-                  v-model="endDate"
-                  class="inp_txt"
-                  type="date"
-              />
-            </div>
-          </span>
+
+              <b-form-radio-group v-model="selectedPeriod"
+                                  :options="direct"
+                                  class="form-check-inline"
+                                  value-field="value"
+                                  text-field="label" inline>
+              </b-form-radio-group>
+              <div class="terms_area" v-if="selectedPeriod === 'direct'">
+                <span class="inp_area calendar">
+                  <div class="inp_calendar">
+                  <input
+                      name="startDate"
+                      v-model="searchParams.modifyFrom"
+                      class="inp_txt"
+                      type="date"
+                  />
+                  </div>
+                  <div class="inp_calendar">
+                    <input
+                        name="endDate"
+                        v-model="searchParams.modifyTo"
+                        class="inp_txt"
+                        type="date"
+                    />
+                  </div>
+                </span>
               </div>
             </div>
           </div>
@@ -165,12 +164,14 @@
             <div class="cont_btn_group terms">
               <div class="terms_area">
                 <b-form-checkbox-group
-                    v-model="selectedScopes"
                     :options="searchScopes"
+                    v-model="searchParams.selectedScopes"
                     class="mb-3"
                     value-field="value"
                     text-field="label"
-                ></b-form-checkbox-group>
+                    @change="changeScopes"
+                >
+                </b-form-checkbox-group>
               </div>
             </div>
           </div>
@@ -178,79 +179,123 @@
           <!-- 버튼 -->
           <div class="layer_bottom">
             <button type="button" class="btn blue" @click="resetSearch">초기화</button>
-<!--            <button type="button" class="btn gray" @click="applySearch">적용</button>-->
           </div>
         </div>
 
         <!-- Search Results -->
-        <div v-if="totalCount > 0">
+        <!-- 검색 결과가 있는 경우 -->
+        <div v-show="totalCount > 0">
           <p class="result_txt">
             <span class="point">‘{{ searchParams.query }}’</span>에 대한 검색결과는
             <span class="point">총 {{ totalCount }} 건</span> 입니다.
           </p>
-          <ul>
-            <li v-for="item in resultAppr" :key="item.DOCID">
-              <strong>{{ item.TITLE }}</strong>
-              <p>{{ item.CONTENTS }}</p>
-              <span>{{ item.DATE }}</span>
-            </li>
-          </ul>
+          <b-card no-body>
+            <b-tabs
+                v-model="activeTab"
+                active-nav-item-class="font-weight-bold text-light bg-primary"
+                content-class="mt-3 text-dark" fill
+            >
+              <b-tab title="전체">
+                <ResultAppr :result="resultAppr" @activateTab="activateTab" :activeMore="true"/>
+                <ResultBoard :result="resultBoard" @activateTab="activateTab" :activeMore="true"/>
+              </b-tab>
+              <b-tab title="전자결재">
+                <ResultAppr :result="resultAppr"/>
+              </b-tab>
+              <b-tab title="게시판">
+                <ResultBoard :result="resultBoard"/>
+              </b-tab>
+            </b-tabs>
+          </b-card>
         </div>
-        <!-- 검색 결과가 없고, 검색이 실행된 경우 -->
+        <!-- 검색 결과가 없는 경우 -->
         <div v-if="totalCount == 0">
           <div class="no_result">
             <p>입력하신 검색어와 일치하는 정보를 찾지 못했습니다.</p>
           </div>
         </div>
-        <b-card no-body>
-          <b-tabs
-                  v-model="activeTab"
-                  active-nav-item-class="font-weight-bold text-light bg-primary"
-                  content-class="mt-3 text-dark" fill
-          >
-            <b-tab title="전체">
-              <ResultAppr :result="resultAppr" :activateMore="true"/>
-              <ResultBoard :result="resultBoard" :activateMore="true"/>
-            </b-tab>
-            <b-tab title="전자결재">
-              <ResultAppr :result="resultAppr"/>
-            </b-tab>
-            <b-tab title="게시판">
-              <ResultBoard :result="resultBoard"/>
-            </b-tab>
-          </b-tabs>
-        </b-card>
-
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import {ref, reactive} from 'vue';
+import {ref, reactive, watch} from 'vue';
 import ResultAppr from './ResultAppr.vue';
 import ResultBoard from '../components/ResultBoard.vue';
 import axios from 'axios';
 
+const initModifyFrom = () => {
+  const yyyy = 1990;
+  const mm = '01';
+  const dd = '01';
+  return `${yyyy}-${mm}-${dd}`;
+};
+const initModifyTo = () => {
+  const today = new Date();
+  const yyyy = today.getFullYear();
+  const mm = (today.getMonth() + 1).toString().padStart(2, '0');
+  const dd = today.getDate().toString().padStart(2, '0');
+  return `${yyyy}-${mm}-${dd}`;
+};
+
+const setDirectPeriod = () => {
+
+  searchParams.modifyTo = initModifyTo()
+
+  // let minusDay = 0;
+  // let minusMonth = 0;
+  // let minusYear = 0;
+  //
+  // console.log(selectedPeriod.value)
+  // switch(selectedPeriod.value) {
+  //   case 'day':
+  //     minusDay = 1;
+  //     break;
+  //   case 'week':
+  //     minusDay = 7;
+  //     break;
+  //   case 'month':
+  //     minusMonth = 1;
+  //     break;
+  //   case 'year':
+  //     minusYear = 1;
+  //     break;
+  // }
+  //
+  // const today = new Date();
+  // const yyyy = today.getFullYear() - minusYear;
+  // const mm = (today.getMonth() + 1 - minusMonth).toString().padStart(2, '0');
+  // const dd = (today.getDate() - minusDay).toString().padStart(2, '0');
+  //
+  // console.log(`${yyyy}-${mm}-${dd}`, ' ~ ', searchParams.modifyTo)
+  return `${yyyy}-${mm}-${dd}`;
+};
+
 const searchParams = reactive({
   query: "",
   collection: "ALL",
-  modifyFrom: "",
-  modifyTo: "",
-  sortField: "DATE",
-  sortDirection: "DESC",
+  modifyFrom: initModifyFrom(),
+  modifyTo: initModifyTo(),
+  sortOption: "RANK/DESC",
   pageStart: 0,
   count: 10,
-  reChk: false,
+  requery: false,
+  realquery: '',
   dept: "",
   userNm: "",
   title: false,
   content: false,
   file: false,
+  selectedScopes: ['ALL'],
 });
 const activeTab = ref(0);
 
+
+let previousQuery = ''
+
 const activateTab = (index) => {
+  console.log('activateTab')
   activeTab.value = index;
 };
 
@@ -258,9 +303,8 @@ const showAdvanceSearchArea = ref(false);
 const totalCount = ref(0);
 const resultAppr = ref({});
 const resultBoard = ref({});
-const searchExecuted = ref(false);
 const selectedPeriod = ref('ALL');
-const selectedScopes = ref(['ALL']);
+// const selectedScopes = ref(['ALL']);
 
 const searchConditions = ref([
   { condition: "AND", keyword: "" },
@@ -288,22 +332,88 @@ const direct = ref([
 ])
 
 const search = async () => {
-  searchExecuted.value = false;
+  console.log('search function...')
+
+  if(searchParams.query === '') {
+    alert('검색어를 입력하세요.')
+    // this.$refs.query.focus(); // focus 코드 작동 안됨. 수정 필요
+    return
+  }
+
   totalCount.value = 0;
+  resultAppr.value = [];
+  resultBoard.value = [];
+
+  previousQuery = searchParams.query;
+
+
+  let searchParamsCopy = searchParams
+
+  for(var i in searchConditions.value){
+    let checkCondition= searchConditions.value[i];
+
+    if(checkCondition.keyword !== '')
+      searchParamsCopy.query += (checkCondition.condition  === 'AND' ? ' ' : '|') + checkCondition.keyword;
+  }
+
+  searchParamsCopy.query = searchParamsCopy.query.trim()
+
   try {
-    console.log(selectedPeriod.value)
-    const response = await axios.post('/search', searchParams);
-    resultAppr.value = response.data.all;
-    resultAppr.value = response.data.appr;
-    resultBoard.value = response.data.board;
-    totalCount.value = response.data.totalCount;
+    console.log('search params: ', searchParamsCopy)
+    const response = await axios.post('/search', searchParamsCopy);
+
+    if(response.data.appr != null){
+      resultAppr.value = response.data.appr
+      totalCount.value += resultAppr.value.totalCount;
+    }
+
+    if(response.data.board != null){
+      resultBoard.value = response.data.board
+      totalCount.value += resultBoard.value.totalCount;
+    }
   } catch (error) {
-    console.log(error.response)
-    console.error('검색 실패:', error);
+
+    let errorMessage = '';
+    for(var i in error.response.data)
+      errorMessage += error.response.data[i] + '\n\n'
+
+    alert(errorMessage);
+    console.error('검색 실패:', errorMessage);
+  } finally {
+    console.log('search function end...')
   }
 };
 
+let previousSelectedScopes = ['ALL']
+const changeScopes = (currentSelectedScopes) => {
+  console.log('changeScopes function...')
 
+  let selectedValue = ''
+  let isSelect = previousSelectedScopes.length  < currentSelectedScopes.length
+
+  if(isSelect)
+    selectedValue = currentSelectedScopes.filter(item => !previousSelectedScopes.includes(item)).join()
+  else
+    selectedValue = previousSelectedScopes.filter(item => !currentSelectedScopes.includes(item)).join()
+  previousSelectedScopes = currentSelectedScopes;
+
+  if(selectedValue === 'ALL' && isSelect)
+    searchParams.selectedScopes = ['ALL'];
+
+  if(selectedValue !== 'ALL' && currentSelectedScopes.includes('ALL'))
+    searchParams.selectedScopes = searchParams.selectedScopes.filter(item => item !== 'ALL');
+
+  if(!currentSelectedScopes.includes('ALL') && currentSelectedScopes.length == 3)
+    searchParams.selectedScopes = ['ALL'];
+
+  console.log('changeScopes function end...')
+}
+
+watch(
+    () => searchParams.selectedScopes, (newValues, oldValues) => {
+      console.log(`old value: ${oldValues}   new value: ${newValues}`)
+    }
+);
 
 const resetSearch = () => {
   searchParams.query = '';
@@ -311,9 +421,8 @@ const resetSearch = () => {
   searchParams.reChk = false;
   searchParams.dept = "";
   searchParams.userNm = '';
-  searchExecuted.value = false;
   selectedPeriod.value = 'ALL'
-  selectedScopes.value = ['ALL']
+  searchParams.selectedScopes.value = ['ALL']
 };
 
 const toggleAdvancedSearch = () => {
@@ -326,4 +435,13 @@ const toggleAdvancedSearch = () => {
   padding: 20px;
 }
 
+/* 테두리 제거 */
+.no-border-tabs .nav-tabs {
+  border-bottom: none !important;
+}
+
+.card, .board_box{
+  border: none !important;
+  //box-shadow: none !important;
+}
 </style>
