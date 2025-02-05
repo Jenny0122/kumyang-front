@@ -1,0 +1,170 @@
+/* 전체 레이아웃 */
+body {
+    font-family: 'Arial', sans-serif;
+    background-color: #f9f9f9;
+    margin: 0;
+    padding: 0;
+}
+
+.wrapper {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+/* 헤더 */
+.header_wrap {
+    background-color: #e5e8ec;
+    padding: 15px 0;
+    border-bottom: 1px solid #ccc;
+}
+
+.header .top {
+    display: flex;
+    align-items: center;
+}
+
+.header .logo img {
+    height: 40px;
+}
+
+/* 검색 영역 */
+.sch_wrap {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 15px;
+    background-color: #ffffff;
+    padding: 20px;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+    position: relative;
+}
+
+/* 검색어 입력 박스 */
+.sch_word_wrap {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.sch_word_wrap input {
+    flex: 1;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    height: 40px; /* 높이 통일 */
+}
+
+.sch_word_wrap .sch_btn {
+    display: inline-block;
+    background-color: #003366;
+    color: white;
+    padding: 10px 15px;
+    text-align: center;
+    border-radius: 5px;
+    cursor: pointer;
+    height: 40px; /* 높이 통일 */
+}
+
+.sch_word_wrap .sch_btn:hover {
+    background-color: #002244;
+}
+
+.sch_opt {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+/* 옵션 버튼 */
+.sch_opt .btn {
+    padding: 10px 15px;
+    font-size: 14px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    height: 40px; /* 높이 통일 */
+}
+
+.sch_opt .btn.gray {
+    background-color: #ddd;
+    color: white;
+}
+
+.sch_opt .btn.gray:hover {
+    background-color: #bbb;
+}
+
+.sch_opt .btn.blue {
+    background-color: #003366;
+    color: white;
+}
+
+.sch_opt .btn.blue:hover {
+    background-color: #002244;
+}
+
+.chk_box {
+    display: flex;
+    align-items: center;
+}
+
+.chk_box input {
+    margin-right: 5px;
+    width: 16px;
+    height: 16px;
+}
+
+.chk_box .txt_box {
+    font-size: 14px;
+}
+
+/* 상세검색 영역 */
+.detailed_search {
+    width: 100%;
+    background-color: #f9f9f9;
+    padding: 15px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    margin-top: 10px;
+    display: none; /* 기본적으로 숨김 */
+    transition: all 0.3s ease-in-out; /* 애니메이션 효과 */
+}
+
+.detailed_search.active {
+    display: block; /* 활성화된 경우 보임 */
+}
+
+.detailed_search input,
+.detailed_search select {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
+
+/* 콘텐츠 */
+.content_wrap {
+    margin-top: 20px;
+}
+
+.layer_pop {
+    background-color: #ffffff;
+    padding: 20px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    margin-bottom: 20px;
+}
+
+/* 검색 결과 박스 */
+.board_box {
+    padding: 20px;
+    background-color: #f4f6f8;
+    border-radius: 8px;
+    border: 1px solid #d1d5db;
+    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+    margin-top: 20px;
+}

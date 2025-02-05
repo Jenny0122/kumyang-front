@@ -4,11 +4,12 @@
       <strong class="tit">게시판</strong>
       <span class="num">({{ totalCount }}건)</span>
 
-      <div v-if="activeMore && totalCount > totalViewCount" class="board_select_box">
-        <button @click="loadMore">더보기</button>
+      <!--  && totalCount > totalViewCount 제거 -->
+      <div v-if="showMore" class="board_select_box">
+        <button class="btn_more" @click="loadMore">더보기</button>
       </div>
 
-      <div v-if="!activeMore" class="board_select_box">
+      <div v-if="!showMore" class="board_select_box">
         <!-- Sorting options -->
         <select v-model="sortOption" @change="doSorting">
           <option value="RANK/DESC">정확도순</option>
@@ -27,7 +28,7 @@
     <!-- Board items -->
     <div v-for="(item, index) in results" :key="index" class="board_cont_box">
       <div class="tit_box">
-        <a class="tit" v-html="highlightKeyword(item.title)"></a>
+        <a class="tit" v-html="item.title" @click="openBoard(item.headerId, item.brdId)"></a>
       </div>
       <span class="date">{{ item.postDate }}</span>
       <div class="cont" v-html="item.contents"></div>
@@ -37,48 +38,81 @@
     </div>
 
     <!-- Pagination -->
-    <div v-if="collection !== 'ALL' && totalCount > 10" class="page_btn_num" id="pagenum">
-      <span v-for="(page, index) in pageLinks" :key="index">
-        <a href="javascript:void(0);" @click="changePage(page)">{{ page }}</a>
-      </span>
+    <div v-show="showPageNav" class="page_navigation" id="pagenum">
+      <!-- 이전 페이지 버튼 -->
+      <button
+          class="num"
+          v-show="isShowPrevious(currentPage)"
+          @click="goPrevious(currentPage)"
+      >
+        이전
+      </button>
+
+      <!-- 페이지 번호 -->
+      <button
+          @click="changePage(page)"
+          class="num"
+          :class="{ num_current: page === currentPage }"
+          v-for="(page, index) in pageLinks.slice(Math.floor((currentPage - 1) / 5) * 5, Math.ceil((currentPage) / 5) * 5)"
+          :key="index"
+      >
+        {{ page }}
+      </button>
+
+      <!-- 다음 페이지 버튼 -->
+      <button
+          class="num"
+          v-show="isShowNext(currentPage)"
+          @click="goNext(currentPage)"
+      >
+        다음
+      </button>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, watch, defineProps, defineEmits } from 'vue';
-
+import {ref, reactive, onMounted, watch, defineProps, defineEmits, computed} from 'vue';
+import { useRoute } from 'vue-router'
 // Props 정의
 const props = defineProps({
-  result: {
-    type: Object,
-    required: true,
-  },
-  activeMore: Boolean
+  result: Object,
+  showMore: Boolean,
+  showPageNav: Boolean,
 });
 
-const totalViewCount = ref(3);
+const queryParams = useRoute().query;
+const K = queryParams.K || '';
+
 // 데이터 초기화
-const collection = ref('board');
+const totalViewCount = import.meta.env.VITE_TOTAL_VIEW_COUNT;
 const totalCount = ref(0);
 const sortOption = ref('RANK/DESC');
 const resultCount = ref(10);
 const results = ref([]);
 const pageLinks = reactive([]);
+const currentPage = ref(1); // 현재 페이지
+const totalPages = computed(() => Math.ceil(totalCount.value / resultCount.value)); // 전체 페이지 수
 
-const emit = defineEmits(['activateTab']);
+const emits = defineEmits(['activateTab', 'changeSortOption', 'changeResultCount', 'changePage']);
 
 // Prop 변화 감지 및 데이터 업데이트
 onMounted(() => {
+  console.log('onMounted')
   updateData(props.result);
 });
 
 watch(
     () => props.result,(newResult) => {
+
+      if(!newResult) return;
       updateData(newResult);
+      generatePageLinks(totalPages.value);
+
     },
     { deep: true }
 );
+
 
 // 데이터 업데이트 함수
 const updateData = (data) => {
@@ -100,22 +134,86 @@ const sanitizeContent = (contents) => {
 };
 
 // 이벤트 핸들러
-const loadMore = () => {
-  console.info('Load more triggered');
-  emit('activateTab', 2);
-};
+const loadMore = () => { emits('activateTab', 2); };
 
-const doSorting = () => {
-  console.log('Sorting option changed:', sortOption.value);
-};
+// 정렬
+const doSorting = () => { emits('changeSortOption', sortOption.value, 2); };
 
-const changeResultCount = () => {
-  console.log('Result count changed:', resultCount.value);
-};
+// 한 페이지당 검색 결과 수
+const changeResultCount = () => { emits('changeResultCount', resultCount.value, 2); };
 
+watch(
+    () => totalPages.value,
+    (newTotalPages) => {
+      generatePageLinks(newTotalPages);
+    }
+);
+const generatePageLinks = (total) => {
+  pageLinks.splice(0, pageLinks.length); // 기존 링크 초기화
+  for (let i = 1; i <= total; i++) {
+    pageLinks.push(i);
+  }
+};
 const changePage = (page) => {
-  console.log('Page changed to:', page);
+
+  if (page < 1 || page > totalPages.value) return; // 유효성 검사
+
+  currentPage.value = page; // 현재 페이지 업데이트
+
+  emits('changePage', page - 1, 2); // 부모로 이벤트 전송
 };
+
+
+const isShowPrevious = (currentPage) => { return Math.floor((currentPage - 1) / 5) * 5 > 1; }
+const isShowNext = (currentPage) => { return Math.ceil((currentPage) / 5) * 5 + 1 < totalPages.value; }
+
+const goPrevious = (currentPage) => { changePage(Math.floor((currentPage - 1) / 5) * 5) };
+const goNext = (currentPage) => { changePage(Math.ceil((currentPage) / 5) * 5 + 1) };
+
+const openBoard = (headerId, brdId) => {
+
+  const url = new URL("https://dgw.kyc.co.kr:9080");
+  url.pathname += "servlet/HIServlet";
+  url.searchParams.append("SLET", "bbs.BBSMtrlRead.java");
+  url.searchParams.append("BMID", headerId);
+  url.searchParams.append("BRDID", brdId);
+  url.searchParams.append("K", K);
+  url.searchParams.append("IFN",1);
+  url.searchParams.append("MET", "NOTIVIEW");
+  url.searchParams.append("LMET", "NCLOSE");
+  url.searchParams.append("popup", "true");
+
+  var popWidth = 550;
+  var popHeight = 725;
+  var popupX = (window.screen.width / 2) - (popWidth / 2);
+  var popupY = (window.screen.height / 2) - (popHeight / 2) - 50;
+
+  const target = "openBoard";
+
+  const specs = [
+    "width=" + popWidth,
+    "height=" + popHeight,
+    "left=" + popupX,
+    "top=" + popupY,
+    "menubar=no",
+    "toolbar=no",
+    "location=no",
+    "status=no"
+  ].join(",");
+
+  window.open(url, target, specs)
+
+  // var gwurl = "https://dgw.kyc.co.kr";
+  // var popWidth = 550;
+  // var popHeight = 725;
+  // var popupX = (window.screen.width / 2) - (popWidth / 2);
+  // var popupY = (window.screen.height / 2) - (popHeight / 2) - 50;
+  // var _options = "menubar=no, toolbar=no, location=no, status=no";
+  //
+  // console.log("openBoard == " + gwurl + "/servlet/HIServlet?SLET=bbs.BBSMtrlRead.java&BMID=" + headerId + "BRDID=" + brdId + "&K=" + K +"&IFN=1&flagCus=&LMET=NCLOSE&popup=true", "openBoard", "width=" + popWidth + ", height=" + popHeight + ", left=" + popupX + ", top=" + popupY + ", " + _options);
+  // window.open(gwurl + "/servlet/HIServlet?SLET=bbs.BBSMtrlRead.java&BMID=" + headerId + "&K=" + K + "&MET=NOTIVIEW&BRDID=&IFN=1&flagCus=&LMET=NCLOSE&popup=true", "openBoard", "width=" + popWidth + ", height=" + popHeight + ", left=" + popupX + ", top=" + popupY + ", " + _options);
+}
+
 </script>
 
 <style scoped>
@@ -138,18 +236,18 @@ const changePage = (page) => {
 }
 
 .board_select_box {
-  margin-top: 10px;
+  margin-top: 5px;
 }
 
 .board_cont_box {
   margin-top: 20px;
 }
 
-.page_btn_num {
+.page_navigation {
   margin-top: 20px;
 }
 
-.page_btn_num a {
+.page_navigation a {
   margin-right: 10px;
 }
 </style>
