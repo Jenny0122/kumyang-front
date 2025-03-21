@@ -579,14 +579,14 @@ onMounted(() => {
     "https://gw.kyc.co.kr/"        // 운영
   ];
   const referer = document.referrer;
-
   // referer 체크 여부
-  // const checkReferer = import.meta.env.VITE_REFERER_CHECK === 'true';
-  if (!referer || !referer.startsWith(allowedReferers)) {
+  const isRefererAllowed = allowedReferers.some(url => referer.startsWith(url));
+
+  if (!referer || !isRefererAllowed) {
     // 허용되지 않은 경우 그룹웨어로 리다이렉트
     alert('그룹웨어를 통해 접속하세요.');
-    window.location.href = "https://dgw.kyc.co.kr:9443"; // 개발
-    // window.location.href = "https://gw.kyc.co.kr"; // 운영
+    // window.location.href = "https://dgw.kyc.co.kr:9443"; // 개발
+    window.location.href = "https://gw.kyc.co.kr"; // 운영
   }
 });
 </script>
