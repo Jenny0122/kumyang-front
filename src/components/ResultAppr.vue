@@ -4,7 +4,7 @@
       <strong class="tit">전자결재</strong>
       <span class="num">({{ totalCount }}건)</span>
 
-      <div v-if="showMore" class="board_select_box">
+      <div v-if="showMore && totalCount > 0" class="board_select_box">
         <button class="btn_more" @click="loadMore">더보기</button>
       </div>
 
@@ -23,6 +23,7 @@
         </select>
       </div>
     </div>
+
     <!-- Appr items -->
     <div v-for="(item, index) in results" :key="index" class="board_cont_box">
       <div class="tit_box">
@@ -72,7 +73,6 @@
 <script setup>
 import { ref, reactive, onMounted, watch, defineProps, defineEmits, computed } from 'vue';
 
-const totalViewCount = import.meta.env.VITE_TOTAL_VIEW_COUNT;
 const totalCount = ref(0);
 const sortOption = ref('RANK/DESC');
 const resultCount = ref(10);
@@ -87,31 +87,33 @@ const props = defineProps({
   },
   showMore: Boolean,
   showPageNav: Boolean,
+  clear: Boolean,
 });
 
 const emits = defineEmits(['activateTab', 'changeSortOption', 'changeResultCount', 'changePage']);
 
 // onMounted(() => {
-//     results.value = props.result;
+//   updateData(props.result);
 // });
-
-// watch(() => props.result, (newResult) => {
-//   results.value = newResult.result;
-//   totalCount.value = newResult.totalCount;
-// }, { deep: true });
-
-onMounted(() => {
-  updateData(props.result);
-});
 
 watch(
     () => props.result,(newResult) => {
       if(!newResult) return;
+
+      currentPage.value = newResult.pageStart + 1;
+
       updateData(newResult);
       generatePageLinks(totalPages.value);
     }, { deep: true }
 );
 
+watch(() => props.clear, (newValue) => {
+  if(newValue) {
+    currentPage.value = 1;
+    resultCount.value = 10;
+    sortOption.value = 'RANK/DESC'
+  }
+})
 
 const updateData = (data) => {
   results.value = data.result || [];
@@ -143,11 +145,9 @@ const generatePageLinks = (total) => {
   }
 };
 const changePage = (page) => {
-  console.log(isShowNext(currentPage))
   if (page < 1 || page > totalPages.value) return; // 유효성 검사
 
   currentPage.value = page; // 현재 페이지 업데이트
-
 
   emits('changePage', page - 1, 1); // 부모로 이벤트 전송
 };
@@ -161,13 +161,13 @@ const goNext = (currentPage) => { changePage(Math.ceil((currentPage) / 5) * 5 + 
 
 const openAppr = (apprId, fldrOwnerId) => {
 
-  const url = new URL("https://dgw.kyc.co.kr:9080");
+  const url = new URL("https://dgw.kyc.co.kr:9443");
   url.pathname += "bms/com/hs/gwweb/appr/retrieveDoccrdInqire.act";
   url.searchParams.append("APPRIDLIST", apprId);
   url.searchParams.append("APPRDEPTID", fldrOwnerId);
-  url.searchParams.append("type", "sanc");
+  url.searchParams.append("CLTAPP", "1");
 
-  var popWidth = 580;
+  var popWidth = 1000;
   var popHeight = 330;
   var popupX = (window.screen.width / 2) - (popWidth / 2);
   var popupY = (window.screen.height / 2) - (popHeight / 2) - 100;
@@ -177,26 +177,20 @@ const openAppr = (apprId, fldrOwnerId) => {
   const specs = [
     "width=" + popWidth,
     "height=" + popHeight,
-    "left=" + popupX,
-    "top=" + popupY,
+    "popupX=" + popupX,
+    "popupY=" + popupY,
     "menubar=no",
     "toolbar=no",
     "location=no",
-    "status=no"
+    "status=no",
+    "noopener=no"
   ].join(",");
 
-  window.open(url, target, specs)
+  console.log(url.toString())
+  console.log(target)
+  console.log(specs)
 
-  // var hostname = "https://dgw.kyc.co.kr";
-  // var popWidth = 580;
-  // var popHeight = 330;
-  // var popupX = (window.screen.width / 2) - (popWidth / 2);
-  // var popupY = (window.screen.height / 2) - (popHeight / 2) - 100;
-  // var _options = "menubar=no, toolbar=no, location=no, status=no";
-  //
-  // console.log("openAppr == " + hostname + "/bms/com/hs/gwweb/appr/retrieveDoccrdInqire.act?APPRIDLIST=" + apprId + "&APPRDEPTID=" + fldrOwnerId + "&type=sanc", "openSanc", "width=" + popWidth + ", height=" + popHeight + ", left=" + popupX + ", top=" + popupY + ", " + _options)
-  //
-  // window.open(hostname + "/bms/com/hs/gwweb/appr/retrieveDoccrdInqire.act?APPRIDLIST=" + apprId + "&APPRDEPTID=" + fldrOwnerId + "&type=sanc", "openSanc", "width=" + popWidth + ", height=" + popHeight + ", left=" + popupX + ", top=" + popupY + ", " + _options);
+  const popup = window.open(url, target, specs)
 }
 
 </script>
@@ -221,7 +215,7 @@ const openAppr = (apprId, fldrOwnerId) => {
 }
 
 .board_select_box {
-  margin-top: 10px;
+  margin-top: 5px;
 }
 
 .board_cont_box {

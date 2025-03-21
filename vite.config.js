@@ -18,7 +18,7 @@ export default defineConfig(({ mode }) => {
     ],
     build: {
       // outDir: path.resolve(__dirname, '../kumYang/src/main/resources/static'), // Spring Boot의 /static 폴더 경로
-      outDir: '../kumYang/src/main/resources/static', // Spring Boot의 /static 폴더 경로
+      outDir: '../src/main/resources/static', // Spring Boot의 /static 폴더 경로
       emptyOutDir: true, // 빌드 시 static 폴더 비우기
       assetsDir: 'assets',
     },

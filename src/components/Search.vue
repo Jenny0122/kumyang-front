@@ -1,21 +1,10 @@
 <template>
   <div class="wrapper">
-    <!-- Hidden Inputs -->
-<!--    <div v-for="(value, key) in searchParams" :key="key">-->
-<!--      <input type="hidden" :name="key" :value="value"/>-->
-<!--    </div>-->
-
     <!-- Header Section -->
-
     <div class="header_wrap">
       <div class="header">
         <div class="top">
           <a href="/" class="logo"><img src="../assets/images/logo.png" alt="(주)금양"/></a>
-<!--          <ul>-->
-<!--            <li class="logo">-->
-<!--              <a href="#"><img src="../assets/images/logo.png" alt="(주)금양"/></a>-->
-<!--            </li>-->
-<!--          </ul>-->
         </div>
 
         <!-- Search Box -->
@@ -40,11 +29,6 @@
             />
 
             <a href="#" class="sch_btn"><span class="ico_comm">자동완성 열기</span></a>
-
-            <!-- Search Input -->
-
-            <!--              <div class="sch_box">-->
-            <!--              </div>-->
           </div>
 
           <!-- Search Options -->
@@ -66,10 +50,6 @@
     </div>
 
     <!-- Content Section -->
-<!--    true false => true-->
-<!--    false false => false-->
-<!--    true false => false-->
-<!--    false false => false-->
     <div class="content_wrap">
       <div class="container">
         <div v-if="showAdvanceSearchArea && searchParams.requery === false" class="layer_pop">
@@ -213,7 +193,6 @@
             <span>’에 대한 검색결과는 </span>
             <span class="point">총 {{ totalCount }}건</span> 입니다.
           </p>
-
           <!-- 탭 및 결과 렌더링 -->
           <b-card no-body>
             <b-tabs
@@ -223,26 +202,28 @@
                 fill
             >
               <b-tab title="전체">
-                <ResultAppr :result="resultAppr"
+                <ResultAppr :result="resultApprAll"
                             :showMore="true"
                             @activateTab="activateTab"
                 />
-                <ResultBoard :result="resultBoard"
+                <ResultBoard :result="resultBoardAll"
                              :showMore="true"
                              @activateTab="activateTab"
                 />
               </b-tab>
               <b-tab title="전자결재">
-                <ResultAppr :result="resultAppr"
+                <ResultAppr :result="resultApprDetail"
                             :showPageNav="true"
+                            :clear="clear"
                             @changeSortOption="onChangeSortOption"
                             @changeResultCount="onChangeResultCount"
                             @changePage="changePage"
                 />
               </b-tab>
               <b-tab title="게시판">
-                <ResultBoard :result="resultBoard"
+                <ResultBoard :result="resultBoardDetail"
                              :showPageNav="true"
+                            :clear="clear"
                              @changeSortOption="onChangeSortOption"
                              @changeResultCount="onChangeResultCount"
                              @changePage="changePage"
@@ -284,13 +265,7 @@ import { useRoute } from 'vue-router';
 import axios from 'axios';
 
 const route = useRoute();
-
-// const pageStarts = reactive({
-//   appr: 0,  // 전자결재 탭의 pageStart
-//   board: 0, // 게시판 탭의 pageStart
-// })
-
-const queryParams = useRoute().query;
+const queryParams = useRoute().query
 const deptId = queryParams.D || '';
 
 const initModifyFrom = () => {
@@ -311,45 +286,6 @@ const initModifyTo = () => {
 const initSearchCondition = () => {
   return [{ condition: "AND", keyword: "" }, { condition: "AND", keyword: "" }, { condition: "AND", keyword: "" }];
 }
-
-const setDirectPeriod = () => {
-
-  searchParams.modifyTo = initModifyTo()
-
-  const today = new Date();
-
-  switch(selectedPeriod.value) {
-    case 'ALL':
-      today.setFullYear(1990);
-      today.setMonth(0);
-      today.setDate(1);
-    case 'day':
-      break;
-    case 'week':
-      today.setDate(today.getDate() + 1);
-      today.setDate(today.getDate() - 7);
-      break;
-    case 'month':
-      today.setDate(today.getDate() + 1);
-      today.setMonth(today.getMonth() - 1);
-      break;
-    case 'year':
-      today.setDate(today.getDate() + 1);
-      today.setFullYear(today.getFullYear() - 1);
-      break;
-  }
-
-  const yyyy = today.getFullYear();
-  const mm = (today.getMonth() + 1).toString().padStart(2, '0');
-  const dd = today.getDate().toString().padStart(2, '0');
-
-  searchParams.modifyFrom = `${yyyy}-${mm}-${dd}`;
-
-  // return `${yyyy}-${mm}-${dd}`;
-};
-
-const setDirectModifyFrom = () => { searchParams.modifyFrom=initModifyFrom(); }
-
 
 const searchParams = reactive({
   query: "",
@@ -372,57 +308,14 @@ const searchParams = reactive({
 const activeTab = ref(0);
 const requestParams = reactive({ ...searchParams })
 const isChangeCollection = ref(false);
-
-let isApprOnly = false
-let isBoardOnly = false
-
-const onChangeSortOption = (value, index) => {
-  searchParams.sortOption = value;
-  search(); // 검색 함수 재실행
-  activateTab(index);
-};
-
-const onChangeResultCount = (value, index) => {
-  searchParams.count = value;
-  search(); // 검색 함수 재실행
-  activateTab(index);
-};
-
-const changePage = (pageStart, index) => {
-  searchParams.pageStart = pageStart;
-  // if (index === 1) {
-  //   pageStarts.appr = pageStart;  // 전자결재 탭의 pageStart 업데이트
-  // } else if (index === 2) {
-  //   pageStarts.board = pageStart;  // 게시판 탭의 pageStart 업데이트
-  // }
-
-  if (index === 1)
-    isApprOnly = true;  // 전자결재 탭의 pageStart 업데이트
-  else
-    isBoardOnly = true;  // 전자결재 탭의 pageStart 업데이트
-
-
-  search(); // 검색 함수 재실행
-  activateTab(index);
-};
-
-const activateTab = (index) => {
-  activeTab.value = index;
-};
-
-const newSearch = () => {
-
-  searchParams.sortOption = import.meta.env.VITE_SORT_OPTION;
-  searchParams.pageStart = Number(import.meta.env.VITE_PAGE_START);
-  searchParams.count = Number(import.meta.env.VITE_COUNT);
-
-  search();
-}
-
 const showAdvanceSearchArea = ref(false);
 const totalCount = ref(0);
-const resultAppr = ref({});
-const resultBoard = ref({});
+const apprTotalCount = ref(0);
+const boardTotalCount = ref(0);
+const resultApprAll = ref({});
+const resultApprDetail = ref({});
+const resultBoardAll = ref({});
+const resultBoardDetail = ref({});
 const selectedPeriod = ref('ALL');
 const selectedScopes = ref(['ALL']);
 const periods = ref([
@@ -438,30 +331,129 @@ const searchScopes = ref([
   { value: "content", label: "내용" },
   { value: "file", label: "첨부파일" },
 ]);
-const direct = ref([
-  { value: "direct", label: "직접 선택" },
-])
-
+const direct = ref([{ value: "direct", label: "직접 선택" }])
 const loading = ref(false);
+
+let isApprAll = false
+let isApprDetail = false
+let isBoardAll = false
+let isBoardDetail = false
+
+const clear = ref(true);
+
+const setDirectPeriod = () => {
+
+  searchParams.modifyTo = initModifyTo()
+
+  const today = new Date();
+
+  switch(selectedPeriod.value) {
+    case 'ALL':
+      today.setFullYear(1990);
+      today.setMonth(0);
+      today.setDate(1);
+      break;
+    case 'day':
+      break;
+    case 'week':
+      today.setDate(today.getDate() + 1);
+      today.setDate(today.getDate() - 7);
+      break;
+    case 'month':
+      today.setDate(today.getDate() + 1);
+      today.setMonth(today.getMonth() - 1);
+      break;
+    case 'year':
+      today.setDate(today.getDate() + 1);
+      today.setFullYear(today.getFullYear() - 1);
+      break;
+  }
+
+  const yyyy = today.getFullYear();
+  const mm = (today.getMonth() + 1).toString().padStart(2, '0');
+  const dd = today.getDate().toString().padStart(2, '0');
+
+  searchParams.modifyFrom = `${yyyy}-${mm}-${dd}`;
+  // return `${yyyy}-${mm}-${dd}`;
+};
+
+const setDirectModifyFrom = () => { searchParams.modifyFrom = initModifyFrom(); }
+
+const initFlags = () => {
+
+  isApprDetail = false;
+  isBoardDetail = false;
+  isApprAll = false;
+  isBoardAll = false;
+}
+const setFlags = (index) => {
+  initFlags();
+  clear.value = false;
+
+  if (index === 1)
+    isApprDetail = true;
+  else
+    isBoardDetail = true;
+  isApprAll = false;
+  isBoardAll = false;
+}
+
+const onChangeSortOption = (value, index) => {
+  searchParams.sortOption = value;
+
+  setFlags(index);
+  search();
+  activateTab(index);
+};
+
+const onChangeResultCount = (value, index) => {
+  searchParams.count = value;
+
+  setFlags(index);
+  search();
+  activateTab(index);
+};
+
+const changePage = (pageStart, index) => {
+  searchParams.pageStart = pageStart;
+
+  setFlags(index);
+  search();
+  activateTab(index);
+};
+
+const activateTab = (index) => { activeTab.value = index; };
+
+const newSearch = () => {
+
+  searchParams.sortOption = import.meta.env.VITE_SORT_OPTION;
+  searchParams.pageStart = Number(import.meta.env.VITE_PAGE_START);
+  searchParams.count = Number(import.meta.env.VITE_COUNT);
+
+  isApprDetail = true;
+  isBoardDetail = true;
+  isApprAll = true;
+  isBoardAll = true;
+  clear.value = true;
+
+  search();
+}
 const search = async (collection) => {
   console.log('search function...')
 
   loading.value = true;
 
-  // 검색 버튼 클릭 시, collection 값에 따라 탭 전환
-  // if(isChangeCollection.value) {
-    switch (searchParams.collection) {
-      case 'ALL':
-        activeTab.value = 0;
-        break;
-      case 'appr':
-        activeTab.value = 1;
-        break;
-      case 'board':
-        activeTab.value = 2;
-        break;
-    }
-  // }
+  switch (searchParams.collection) {
+    case 'ALL':
+      activeTab.value = 0;
+      break;
+    case 'appr':
+      activeTab.value = 1;
+      break;
+    case 'board':
+      activeTab.value = 2;
+      break;
+  }
 
   if(searchParams.query === '' || searchParams.query === undefined) {
     alert('검색어를 입력하세요.')
@@ -473,6 +465,8 @@ const search = async (collection) => {
   searchParams.file = selectedScopes.value.includes('file')
 
   totalCount.value = 0;
+  apprTotalCount.value = 0;
+  boardTotalCount.value = 0;
   // resultAppr.value = [];
   // resultBoard.value = [];
 
@@ -490,21 +484,38 @@ const search = async (collection) => {
 
   try {
     const response = await axios.post('/search', requestParams);
+    console.log(response.data)
 
-    if(response.data.appr != null && (isApprOnly || (isApprOnly == isBoardOnly))) {
-      console.log('전자결재 update')
-      resultAppr.value = response.data.appr
-      totalCount.value += resultAppr.value.totalCount;
-      isApprOnly = false;
+    if(isApprDetail) console.log('전자결재 탭 업데이트')
+    if(isBoardDetail) console.log('게시판 탭 업데이트')
+    if(isApprAll) console.log('전체 탭 전자결재 업데이트')
+    if(isBoardAll) console.log('전체 탭 게시판 업데이트')
+
+    if(response.data.appr != null) {
+      let appr = response.data.appr;
+
+      apprTotalCount.value = appr.totalCount
+      totalCount.value += apprTotalCount.value;
+
+      if(isApprAll) resultApprAll.value = appr
+      if(isApprDetail) resultApprDetail.value = appr
+    } else {
+      resultApprAll.value = {}
+      resultApprDetail.value = {}
     }
 
-    if(response.data.board != null && (isBoardOnly || (isApprOnly == isBoardOnly))) {
-      console.log('게시판 update')
-      resultBoard.value = response.data.board
-      totalCount.value += resultBoard.value.totalCount;
-      isBoardOnly = false;
-    }
+    if(response.data.board != null) {
+      let board = response.data.board;
 
+      boardTotalCount.value = board.totalCount
+      totalCount.value += boardTotalCount.value;
+
+      if(isBoardAll) resultBoardAll.value = board
+      if(isBoardDetail) resultBoardDetail.value = board
+    } else {
+      resultBoardAll.value = {}
+      resultBoardDetail.value = {}
+    }
     resetDetailSearchForm();
 
   } catch (error) {
@@ -563,28 +574,21 @@ const resetDetailSearchForm = () => {
 const toggleAdvancedSearch = () => { showAdvanceSearchArea.value = !showAdvanceSearchArea.value; };
 
 onMounted(() => {
-  // const allowedReferer = "https://your-allowed-domain.com"; // 허용할 referrer
+  const allowedReferers = [
+    "https://dgw.kyc.co.kr:9443/", // 개발
+    "https://gw.kyc.co.kr/"        // 운영
+  ];
   const referer = document.referrer;
 
   // referer 체크 여부
-  // 운영환경에서만 체크
-  const checkReferer = import.meta.env.VITE_REFERER_CHECK === 'true';
-  // if (!referer || !referer.startsWith(allowedReferer)) {
-  //   // 허용되지 않은 경우 리다이렉트
-  //   alert('직접 접근이 허용되지 않습니다.');
-  //   router.push('/not-allowed'); // 허용되지 않은 페이지로 이동
-  // }
+  // const checkReferer = import.meta.env.VITE_REFERER_CHECK === 'true';
+  if (!referer || !referer.startsWith(allowedReferers)) {
+    // 허용되지 않은 경우 그룹웨어로 리다이렉트
+    alert('그룹웨어를 통해 접속하세요.');
+    window.location.href = "https://dgw.kyc.co.kr:9443"; // 개발
+    // window.location.href = "https://gw.kyc.co.kr"; // 운영
+  }
 });
-
-watch(
-    () => route.query,
-    (queryParams) => {
-      searchParams.query = queryParams.query;
-      search();
-    }
-);
-
-
 </script>
 
 <style scoped>
